@@ -1,7 +1,7 @@
 {
   "name": "@huaweicloud-plugins/scenes-skill-creator",
-  "version": "0.1.3",
-  "description": "DeepSeek Harness bundle: create spec-compliant skills through the prototype's panel UI, delegating creation and review to the official generic / Huawei Cloud creator skills.",
+  "version": "0.1.4",
+  "description": "DeepSeek Harness plugin: create, evaluate, repair, and install generic and Huawei Cloud skills through a web panel backed by the official creators.",
   "license": "MIT",
   "repository": {
     "type": "git",

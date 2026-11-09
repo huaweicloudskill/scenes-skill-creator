@@ -1,235 +1,202 @@
-# Scenes Skill Creator（DeepSeek Harness 插件）
+# Scenes Skill Creator
 
-在 DeepSeek Harness 的 Web 界面里，用一套完整面板创建技能：填写需求 → 调用官方 creator → 实时查看阶段 / 日志 → 10 分制评测 → 未达标打回修复，直到达标或用完轮数。
+**DeepSeek Harness 的通用技能 / 华为云技能创建插件。** 在 DSH 的 Web 面板里填写需求，调用官方 creator 真实生成、评测并修复技能，达标后一键安装到 DSH 技能目录。
 
 ![面板预览](docs/panel.png)
 
-## 功能
+## 这是什么
 
-- **两个场景**：通用技能（`generic`）和华为云基础云服务技能（`huawei`）。
-- **真实 creator 执行**：插件不生成内容，而是把需求交给 `common-skill-creator` / `huawei-cloud-skill-creator`；支持拉取、缓存和展示 creator 版本。
-- **实时运行面板**：创建、评测、修复三个阶段实时更新；阶段、步骤日志、产物、评测报告均可查看。
-- **评测与修复**：10 分制评分，默认通过线 8.5；未达标时自动打回同一个 creator 修复。
-- **通用技能快速模式**：默认只跑 1 轮评测，结果页可反复手动「继续修复并复评」，直到达标或你停止。
-- **创建记录**：华为云和通用记录统一展示，支持类型 / 状态筛选；记录不设数量上限。
-- **安装 / 启用**：结果页可把成品技能复制到 DSH 用户技能目录并刷新技能发现。
-- **远程参考数据**：参考案例和推荐技能来自公共数据仓库，插件内不写死；网络失败时回落到上次成功缓存。
-- **面板内推荐网址**：AI Shell、Grape、华为云 Skills 官网。
+Scenes Skill Creator 是一个 **DeepSeek Harness bundle 插件**。它不自己“编”技能，而是把创建和评审交给官方 creator：
 
-## 仓库
+- **通用技能**：调用 `common-skill-creator`，适合日常 Agent Skill、工具封装、流程自动化；
+- **华为云技能**：调用 `huawei-cloud-skill-creator`，按华为云规范生成基础云服务技能，覆盖三级目录、hcloud CLI、测试夹具和评测；
+- 面板负责收集需求、展示阶段和日志、呈现 10 分制评测结果，并在未达标时把扣分项交回 creator 修复。
 
-- GitHub：`https://github.com/huaweicloudskill/scenes-skill-creator`
-- GitCode：`https://gitcode.com/developer-skill/scenes-skill-creator`
-
-两个仓库保持同一份插件代码；参考与推荐数据单独放在 `common-skill-dev@dsh-plugin` 分支。
-
-## 架构
+一次创建流程：
 
 ```text
-DSH Web
- └─ client (src/client.js)
-     └─ iframe  /scenes-skill-creator/app/     ← assets/panel.html
-          └─ assets/panel-bridge.js            ← 原型 UI ↔ Host API 适配
-               └─ fetch /scenes-skill-creator/api/*（同源，无 CORS）
-                    └─ Host (src/core/plugin.mjs)
-                         ├─ ctx.skills.registerProvider  （注册两个官方 creator）
-                         ├─ ctx.webServer  （API + 静态面板）
-                         └─ runner / evaluator  （创建 → 评测 → 打回修复）
+填写需求 → 官方 creator 生成 → 实时阶段 / 日志 → 10 分制评测
+        → 达标：安装到 DSH 技能目录
+        → 未达标：自动或手动打回修复 → 再评测
 ```
 
-- 所有逻辑都在 Harness 进程内，不额外监听端口。
-- 面板 UI 以 `assets/panel.html` 交付，`assets/panel-bridge.js` 只替换数据源，不改视觉与交互。
-- 记录持久化、看门狗、评测门禁参考官方 `@cloudplugin/scenes-skill-creator` 的 Host 实现，并去掉了记录数量上限。
+## 优点
 
-## 目录
-
-| 路径 | 作用 |
-| --- | --- |
-| `src/client.js` | Web client：注册 sidebar 图标 + main slot，iframe 铺满 |
-| `assets/panel.html` | 面板 UI（发布版） |
-| `assets/panel-bridge.js` | 面板 ↔ Host API 适配（run / 记录 / 目录 / 环境 / 参考数据 / 安装） |
-| `src/core/plugin.mjs` | Host 入口：creator provider、API、静态面板路由 |
-| `src/core/routes.mjs` | `/scenes-skill-creator/api` 与 `/scenes-skill-creator/app` |
-| `src/core/runner.mjs` / `evaluator.mjs` | 创建、修复、评测流程 |
-| `src/core/creators.mjs` / `catalog.mjs` | 官方 creator 拉取、华为云三级目录 |
-| `src/core/refs.mjs` | 公共仓库参考/推荐数据：GitCode base64 解码、校验、last-good 缓存 |
-| `bin/` | CLI 辅助工具 |
-| `test/host/` / `test/bridge/` / `test/client/` | Host 单测、bridge + mock API + 无头 Edge 测试 |
-| `cordis.patch.yml` | bundle 声明与默认配置 |
+- **真实执行，不是演示数据**：每个阶段、步骤、评测结果都来自真实 creator 运行；面板不伪造进度和分数。
+- **通用 + 华为云双场景**：同一套界面覆盖两种技能规范，华为云目录从真实仓库懒加载。
+- **自动评测与打回修复**：10 分制评分，默认通过线 8.5；不达标自动进入修复轮次，最多 3 轮。
+- **通用技能快速模式**：默认只跑 1 轮评测，先保证功能可用；结果页可以反复「继续修复并复评」，直到你满意。
+- **创建记录跨类型管理**：通用和华为云记录一起展示，支持类型 / 状态筛选，不限制记录数量。
+- **一键安装**：达标后把成品目录复制到 DSH 技能目录，并刷新技能发现。
+- **参考数据不写死**：参考案例和推荐技能从公共 JSON 数据仓库读取，更新数据不需要发新版插件。
+- **MIT 开源**：代码、npm 包、数据来源全部公开，可自由使用、修改和分发。
 
 ## 安装
 
-### 从 npm 安装
+### 方式一：DSH 插件页（推荐）
+
+1. 打开 DSH → **插件**；
+2. 选择安装插件 / 从 npm 安装；
+3. 输入包名：
+
+   ```text
+   @huaweicloud-plugins/scenes-skill-creator
+   ```
+
+4. 安装完成后重启 DSH（或让 DSH 完成热加载）；
+5. 左侧栏出现 **Scenes Skill Creator** 即安装成功。
+
+插件页会自动处理 profile 依赖和 bundle 注册，适合日常安装。
+
+### 方式二：`dsh plugin` 命令
+
+先**完全退出 DSH**，然后在终端执行：
 
 ```powershell
-cd $env:USERPROFILE\.dsh\profiles\desktop
-pnpm add @huaweicloud-plugins/scenes-skill-creator
-
-# 确认 profile 已注册：
-#   dsh.profile.bundles 包含 "@huaweicloud-plugins/scenes-skill-creator"
-#   cordis.patch.yml 的插件条目 id 为 "scenes-skill-creator"，
-#   name 为 "@huaweicloud-plugins/scenes-skill-creator"
+& "<DSH 安装目录>\resources\runtime\cli\bin\dsh.cmd" plugin --profile desktop add @huaweicloud-plugins/scenes-skill-creator
 ```
 
-也可以直接在 DSH「插件」页面安装 npm 包；不同 DSH 版本的入口名称可能不同。
-
-### 本地开发包
+如果你的 `dsh` 已经在 PATH 里，也可以直接：
 
 ```powershell
-git clone https://github.com/huaweicloudskill/scenes-skill-creator.git
-cd scenes-skill-creator
-
-# 或使用 GitCode 镜像：
-# git clone https://gitcode.com/developer-skill/scenes-skill-creator.git
-
-# 进入 DSH desktop profile，把本仓库作为本地依赖加入
-cd $env:USERPROFILE\.dsh\profiles\desktop
-pnpm add <本仓库的绝对路径>
+dsh plugin --profile desktop add @huaweicloud-plugins/scenes-skill-creator
 ```
 
-安装后需要**重启一次 DSH**。bundle 列表、补丁层和 client 资源只在启动时解析；不重启的典型表现是侧栏没有图标，或 `/scenes-skill-creator/api` 404。
+说明：
 
-### 首次安装检查清单
+- 命令格式是 `dsh plugin --profile desktop add <包名>`；
+- 如果 `dsh` 不在 PATH，使用 DSH 安装目录下的 `resources\runtime\cli\bin\dsh.cmd`；
+- `desktop` 是 DSH 桌面版保留 profile，必须使用 DSH 自带的 CLI；普通 npm CLI 不能管理它；
+- 安装会通过 profile 的 pnpm 完成，新 bundle 默认加入 `dsh.profile.bundles`；
+- 重新打开 DSH 后生效；
+- 卸载：
 
-1. 侧栏出现 **Scenes Skill Creator** 图标，面板显示两个场景、「参考案例 / 技能推荐」和推荐网址；
-2. 通用技能填写需求并开始创建，运行页出现阶段与步骤日志，结束后进入结果页并显示评测分；
-3. 创建记录可打开详情、返回列表、删除已结束记录；
-4. 切到华为云场景，domain / product / name 下拉来自真实仓库；
-5. 切换 DSH 主题，iframe 面板跟随；面板内语言 / 主题切换正常。
+  ```powershell
+  & "<DSH 安装目录>\resources\runtime\cli\bin\dsh.cmd" plugin --profile desktop remove @huaweicloud-plugins/scenes-skill-creator
+  ```
 
-### 安装后 DSH 打不开（BOM 问题）
+### 安装后检查
 
-如果装完插件后 **DSH 本体启动失败**、日志里出现下面这行，问题不在插件代码，而是 profile 的 `package.json` 被写入了 UTF-8 BOM：
+侧栏出现 **Scenes Skill Creator**，打开面板能看到两个场景、参考案例卡和推荐技能卡。
 
-```text
-DesktopHostFatalError: Unexpected token '﻿', "﻿{
-    "n"... is not valid JSON
-    at readProfileManifest (.../@deepseek-ai/dsh-app-boot/lib/index.js:1692:22)
-```
-
-DSH 启动时用裸 `JSON.parse(readFileSync(...))` 读 profile manifest，BOM 会让解析直接抛错，整个 Host 进程退出。PowerShell 的 `Out-File` / `Set-Content`、以及部分 Windows 编辑器保存 JSON 时默认带 BOM，手工改过 profile 就可能踩到。
-
-先自检，再修复：
+Windows 上如果 DSH 启动时报 `Unexpected token '\uFEFF'`，通常是 profile 的 `package.json` 带了 UTF-8 BOM。可以运行：
 
 ```powershell
-# 在插件仓库目录
-node bin/dsh-skill-doctor.mjs          # 只报告
-node bin/dsh-skill-doctor.mjs --fix    # 去掉 BOM，原文件留 .bak-bom-* 备份
+node "$env:USERPROFILE\.dsh\profiles\desktop\node_modules\@huaweicloud-plugins\scenes-skill-creator\bin\dsh-skill-doctor.mjs"
+node "$env:USERPROFILE\.dsh\profiles\desktop\node_modules\@huaweicloud-plugins\scenes-skill-creator\bin\dsh-skill-doctor.mjs" --fix
 ```
 
-自检覆盖 profile manifest、`cordis.patch.yml`、每个 bundle 的 manifest 与补丁层，以及本插件必需的文件；BOM 之外的结构问题（未安装的 bundle、缺失的 `dsh.bundle`、找不到的面板资源）也会一并报出来。修完重启 DSH。
+### 运行环境
 
-**避免复发**：编辑 profile 的 JSON 时用不带 BOM 的写法，例如 `[IO.File]::WriteAllText(path, text, (New-Object System.Text.UTF8Encoding $false))`，或在 Node 里 `fs.writeFileSync(file, JSON.stringify(v, null, 2) + "\n")`（Node 默认不写 BOM）。
+- DSH Desktop 0.2.x（已在 `0.2.2-rc.1` 验证）；
+- 能访问 `gitcode.com`：creator、参考数据、华为云目录都从这里拉取；
+- `git`、`bash`（Windows 用 Git Bash）、`python3`；
+- 华为云场景还需要可用的 hcloud / AKSK 配置；
+- creator 需要执行 shell / CLI，默认使用 `danger-full-access` 权限，建议只在可信工作区使用。
 
-## 配置
+## 创建通用技能
 
-写在 `cordis.patch.yml` 的 `config` 下；profile 覆盖时整块替换。
+1. 顶部选择 **通用技能**；
+2. 在需求框描述要做什么，例如“创建一个能查询天气的 skill，支持城市名和摄氏度/华氏度参数”；
+3. 点击开始创建；
+4. 运行页会显示创建、评测、修复阶段和步骤日志；
+5. 结果页显示总分、各维度、扣分项和改进建议；
+6. 达标后可点击「安装 / 启用该技能」复制到 DSH 技能目录。
+
+通用技能默认走快速模式：1 轮评测、优先最小可用路径。未达标时点「继续修复并复评」即可反复修复，不自动无限循环。
+
+## 创建华为云技能
+
+1. 顶部选择 **华为云基础云服务技能**；
+2. 依次选择 domain → product，填写 skill 名称和需求；
+3. 点击开始创建，creator 会按华为云规范生成技能、CLI 命令、测试夹具和评测；
+4. 评测不达标时自动修复；通用技能则可手动复评；
+5. 完成后安装到 DSH 技能目录，或打开产物目录查看。
+
+华为云目录来自真实仓库，首屏可能短暂使用缓存；刷新目录会重新拉取。
+
+## 创建记录
+
+- 记录页默认展示通用 + 华为云全部记录；
+- 支持「全部类型 / 通用 / 华为云」和「全部 / 进行中 / 未达标」筛选；
+- 可打开详情、返回列表、删除已结束记录；
+- 运行中的记录不能直接删除，先取消再删。
+
+## 评测与修复
+
+- 10 分制评分，默认通过线 **8.5**；
+- 自动评测最多 **3 轮**；
+- 通用技能默认只跑 **1 轮**，结果页可反复手动「继续修复并复评」；
+- 评测覆盖功能可用、稳定性、成本、效率、安全等维度；
+- 通用技能如果没有 `evals/evals.json`，插件会从 `SKILL.md` 的只读命令示例生成最小测试夹具，再由评测 agent 实际执行并给出证据。
+
+## 配置（可选）
+
+默认配置在 `cordis.patch.yml`。需要覆盖时，在 profile 的 `cordis.patch.yml` 的 `config` 下写同名键；profile 覆盖是整块替换。
 
 | 键 | 默认 | 说明 |
 | --- | --- | --- |
-| `run.cwd` | Host cwd | 技能落盘根：`<cwd>/skills/...`。建议显式设置为你的工作区 |
-| `run.permissionPreset` | `danger-full-access` | creator 需要执行 bash/CLI；只读或 workspace-write 会卡在审批。仅在可信工作区使用 |
-| `run.passScore` | `8.5` | 10 分制通过线 |
+| `run.cwd` | Host cwd | 技能落盘根目录，建议显式设置为自己的工作区 |
+| `run.permissionPreset` | `danger-full-access` | creator 执行 bash/CLI 所需；仅在可信工作区使用 |
+| `run.passScore` | `8.5` | 通过线 |
 | `run.maxEvalRounds` | `3` | 最多自动评测轮数；`0` 关闭评测 |
-| `run.genericFastMode` | `true` | 通用技能快速模式：追加契约优先 / 最小路径 / 复用同域技能等提示词 |
-| `run.genericMaxEvalRounds` | `1` | 通用技能最多自动评测轮数；显式值优先于 fast mode |
-| `run.evalReadonlyOnly` | `true` | 只跑只读/语法用例 |
-| `run.installDir` | `$DSH_HOME/skills`（默认 `~/.dsh/skills`） | 「安装 / 启用该技能」的复制目标；DSH 文件系统 provider 会扫描该目录 |
-| `refs.huaweiUrl` / `refs.genericUrl` | 公共仓库 `dsh-plugin` 分支的 GitCode Contents API | 参考案例 / 推荐技能数据源 |
-| `refs.refreshMs` | `0` | `0` = 每次 `/refs` 都拉最新；大于 0 时在窗口内复用内存缓存 |
-| `refs.timeoutMs` / `refs.maxBytes` / `refs.cacheBust` | `8000` / `1048576` / `true` | 超时、响应上限、是否附加时间戳绕过 CDN |
-| `run.*` 预算 / 门禁 | 同官方 Host | token、时长、工具调用、失败/重试上限与门禁压分 |
-| `catalog.repo/ref/root` | 华为云仓库 `master` / `skills` | 三级目录来源 |
-| `creators.huawei/generic` | 官方仓库与路径 | 两个 creator |
-
-### 通用技能快速模式
-
-通用技能没有固定流水线，容易出现「先写上千行、最后才第一次跑」。插件对 `generic` 额外做了三件事：
-
-1. **创建/修复提示词要求先定契约、先跑最小路径**：先确定子命令、参数、退出码、stdout/stderr 和 JSON 结构，再写 ≤30 行最小路径并真实运行；先写 smoke test 骨架；优先复用工作区同域技能；`SKILL.md` 目标 ≤180 行、references 最多 1 个。
-2. **自动评测轮数封顶**：`genericMaxEvalRounds: 1`，华为云仍走 `maxEvalRounds: 3`。
-3. **缺失夹具自动补齐**：通用 skill 若没有可解析的 `evals/evals.json`，「功能可用」会直接 0 分。评测前会从 `SKILL.md` 已记录的只读命令示例生成最小夹具（3 条）；评测 agent 仍须实际执行并给出证据，不是白送分。
-
-恢复完整质量闭环：把 `run.genericFastMode` 设为 `false`，或显式写 `run.genericMaxEvalRounds: 3`。
-
-### 手动复评
-
-通用技能默认只跑 1 轮；未达标时结果页出现「继续修复并复评」。每次点击执行一轮「把扣分交回 creator 修复 → 再评测」；仍未达标可以继续点，直到达标或你主动停止，不会自动循环。
-
-原 creator 会话仍在时直接复用；插件重启或旧记录会话结束时，会为复评新起一个 creator，针对现有技能目录修复。接口为 `POST /run/retry {id}`。
-
-### 安装 / 启用
-
-结果页按钮调用 `POST /install {id}`，把成品目录复制到 `run.installDir`，然后调用 `skills.invalidateCache()` 让 DSH 文件系统 provider 重新发现技能。成功后按钮变为「重新安装」，并显示安装路径。
+| `run.genericFastMode` | `true` | 通用技能快速模式 |
+| `run.genericMaxEvalRounds` | `1` | 通用技能自动评测轮数；显式值优先于快速模式 |
+| `run.installDir` | `$DSH_HOME/skills` | 「安装 / 启用」复制目标 |
+| `refs.*` | 公共 JSON 仓库 | 参考案例 / 推荐数据源 |
+| `catalog.*` | 华为云仓库 | 三级目录来源 |
+| `creators.*` | 官方 creator | 两个 creator 仓库和路径 |
 
 ## 参考与推荐数据
 
 数据位于公共仓库 `developer-skill/common-skill-dev` 的 `dsh-plugin` 分支：
 
-```text
-huawei/references.json    5 个案例；7 个 domain 每个最多 10 条推荐，当前前四条：
-                          find-skills → billing-scout → ecs-alert → install-openjiuwenswarm
-generic/references.json   2 个案例（通用 / 华为云 Skill 创建）+ 10 个精选推荐
-references.schema.json
-```
+- 华为云：5 个案例；7 个 domain 每个最多 10 条推荐；
+- 通用：2 个案例 + 10 个精选推荐。
 
-GitCode 对非默认分支的 raw 地址返回 403，所以 Host 通过 Contents API 拉取并解码 base64。每次 `/refs` 按 `refs.refreshMs` 拉取（默认每次），失败时依次使用内存 last-good、磁盘 last-good、空数据。案例和推荐全部来自 JSON；发布版 `assets/panel.html` 不包含数据快照，Host 也不再注入任何固定案例。
+插件通过 Host `/refs` 拉取 JSON，失败时回落到 last-good 缓存。更新数据只需改数据仓库，不需要发新版插件。
 
-## API
+## 开源与许可
 
-前缀：`/scenes-skill-creator/api`
+- GitHub：`https://github.com/huaweicloudskill/scenes-skill-creator`
+- GitCode：`https://gitcode.com/developer-skill/scenes-skill-creator`
+- npm：`https://www.npmjs.com/package/@huaweicloud-plugins/scenes-skill-creator`
+- 许可证：**MIT**，见 [LICENSE](LICENSE)。
 
-```text
-GET  /status                      面板 / creator / catalog 状态
-GET  /catalog?path=skills         华为云目录（懒加载）
-GET  /creator?mode=generic|huawei 拉取 / 查看官方 creator
-GET  /refs                        参考案例 / 技能推荐（公共仓库最新数据，失败回 last-good）
-POST /run        {spec}           开始创建
-POST /run/retry  {id}             手动修复 + 下一轮评测
-POST /install    {id}             安装 / 启用成品技能
-POST /cancel     {id}             取消运行
-POST /handoff    {spec}           调试：creator 请求文本
-POST /validate   {path,mode}      结构校验
-GET  /run | /run?id=              记录列表 / 单条详情
-DELETE /run?id=                   删除已结束记录（运行中需先取消）
-```
+插件完全开源，Host、桥接层、面板、CLI 和测试都在仓库里；欢迎 issue / PR。
 
-`spec`：
-
-```js
-{ mode: "generic", description: "..." }
-{ mode: "huawei", name: "huawei-cloud-ecs-manage", domain: "computing", product: "ecs", description: "..." }
-```
-
-## 开发与验证
+## 开发者
 
 ```sh
 npm test          # host + bridge + client 测试
-npm run check     # node --check src/client.js 与 assets/panel-bridge.js
-npm run doctor    # 自检本机 DSH profile（manifest / bundle / 面板资源）
-npm run sync:panel -- <prototype/index.html>  # 开发用；默认移除面板内嵌参考数据
+npm run check     # node --check
+npm run doctor    # 检查本机 DSH profile 的 manifest / bundle / 面板资源
 ```
 
-- Host 测试使用 mock，不访问网络、不启动真实 agent。
-- Bridge 测试启动本地 mock API，用无头 Microsoft Edge 打开面板；未安装 Edge 时会显式 skip。
-- 覆盖 `full`、`cancel`、`retry` 三个 bridge 场景，以及 Host 路由、runner、refs、creator、client 单测。
+- 测试结果：**65 tests / 0 fail**；
+- Host 测试使用 mock，不访问网络、不启动真实 agent；
+- Bridge 测试用 mock API + 无头 Edge 打开面板；
+- 发布版 `assets/panel.html` 不内嵌参考数据，数据全部走 Host `/refs`。
 
-当前测试结果：`npm test` → **65 tests / 0 fail**。
+### 目录
 
-## 行为与限制
+| 路径 | 作用 |
+| --- | --- |
+| `src/client.js` | Web client：sidebar 图标 + iframe 面板 |
+| `assets/panel.html` | 面板 UI |
+| `assets/panel-bridge.js` | 面板 ↔ Host API 适配 |
+| `src/core/plugin.mjs` | Host 入口：creator provider、API、静态面板 |
+| `src/core/routes.mjs` | `/scenes-skill-creator/api` 与 `/app` |
+| `src/core/runner.mjs` / `evaluator.mjs` | 创建、修复、评测 |
+| `src/core/refs.mjs` | 公共参考 / 推荐数据 |
+| `bin/dsh-skill-doctor.mjs` | profile 自检 / BOM 修复 |
+| `cordis.patch.yml` | bundle 声明与默认配置 |
 
-1. **不做内容创作**：`SKILL.md`、references、测试夹具由官方 creator 生成。
-2. **必须能跑 creator**：需要网络访问 gitcode.com、`git`、`bash`（Windows 用 Git Bash）、`python3`；华为云场景还需要可用的 hcloud/AKSK 配置。
-3. **默认完整权限**：creator 要执行 bash/CLI；仅在可信工作区使用。
-4. **记录不设数量上限**；日志显示截断到最近 120 步，Host 侧保留 200 步。
-5. **参考案例 / 推荐技能来自公共仓库**：页面加载时请求 Host `/refs`；远程失败使用 last-good，不会影响创建流程。视频/仓库链接只在点击时打开。
-6. **UI 是 iframe**：原型有独立顶栏、语言/主题切换；加载时用 `?theme=`，之后通过 `postMessage({type:"sc-theme"})` 与 DSH 主题同步。
-7. **Host 快照没有文件统计**：结果页「产物」显示 0 文件 / 0.0 KB；bridge 不伪造。
-8. **记录删除**：调用 `DELETE /run?id=` 持久删除；运行中的记录会被拒绝（先取消再删）。
-9. **环境页来自真实探测**：`/status` 返回 git / bash / python / AKSK 环境变量或 `~/.hcloud` 配置；「gitcode 可达」按接口请求成功计。
-10. **轮询固定 1s**；404 停止轮询，其它瞬时错误继续重试。
-11. **未实现**：平台侧 PR / A2A 交接；标准 API 场景已移除。
+## 已知限制
 
-## License
-
-MIT。Host 流程参考官方 `@cloudplugin/scenes-skill-creator` 的设计。
+- 不做内容创作：`SKILL.md`、references、夹具由官方 creator 生成；
+- 必须能跑 creator：需要网络、git、bash、python3，华为云另需 hcloud/AKSK；
+- 默认完整权限，只在可信工作区使用；
+- Host 快照暂不提供产物文件统计，结果页显示 0 文件 / 0.0 KB；
+- 暂未实现平台侧 PR / A2A 交接；
+- 记录日志显示截断到最近 120 步，Host 侧保留 200 步。
