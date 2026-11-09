@@ -1,11 +1,4 @@
-﻿node_modules/
-dist/
-coverage/
-.cache/
-.nyc_output/
+.workbuddy/
+node_modules/
+*.tgz
 *.log
-*.tmp
-*.bak
-*.bak-*
-.DS_Store
-Thumbs.db

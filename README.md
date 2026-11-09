@@ -97,6 +97,30 @@ pnpm add <本仓库的绝对路径>
 4. 切到华为云场景，domain / product / name 下拉来自真实仓库；
 5. 切换 DSH 主题，iframe 面板跟随；面板内语言 / 主题切换正常。
 
+### 安装后 DSH 打不开（BOM 问题）
+
+如果装完插件后 **DSH 本体启动失败**、日志里出现下面这行，问题不在插件代码，而是 profile 的 `package.json` 被写入了 UTF-8 BOM：
+
+```text
+DesktopHostFatalError: Unexpected token '﻿', "﻿{
+    "n"... is not valid JSON
+    at readProfileManifest (.../@deepseek-ai/dsh-app-boot/lib/index.js:1692:22)
+```
+
+DSH 启动时用裸 `JSON.parse(readFileSync(...))` 读 profile manifest，BOM 会让解析直接抛错，整个 Host 进程退出。PowerShell 的 `Out-File` / `Set-Content`、以及部分 Windows 编辑器保存 JSON 时默认带 BOM，手工改过 profile 就可能踩到。
+
+先自检，再修复：
+
+```powershell
+# 在插件仓库目录
+node bin/dsh-skill-doctor.mjs          # 只报告
+node bin/dsh-skill-doctor.mjs --fix    # 去掉 BOM，原文件留 .bak-bom-* 备份
+```
+
+自检覆盖 profile manifest、`cordis.patch.yml`、每个 bundle 的 manifest 与补丁层，以及本插件必需的文件；BOM 之外的结构问题（未安装的 bundle、缺失的 `dsh.bundle`、找不到的面板资源）也会一并报出来。修完重启 DSH。
+
+**避免复发**：编辑 profile 的 JSON 时用不带 BOM 的写法，例如 `[IO.File]::WriteAllText(path, text, (New-Object System.Text.UTF8Encoding $false))`，或在 Node 里 `fs.writeFileSync(file, JSON.stringify(v, null, 2) + "\n")`（Node 默认不写 BOM）。
+
 ## 配置
 
 写在 `cordis.patch.yml` 的 `config` 下；profile 覆盖时整块替换。
@@ -182,13 +206,14 @@ DELETE /run?id=                   删除已结束记录（运行中需先取消�
 ```sh
 npm test          # host + bridge + client 测试
 npm run check     # node --check src/client.js 与 assets/panel-bridge.js
+npm run doctor    # 自检本机 DSH profile（manifest / bundle / 面板资源）
 ```
 
 - Host 测试使用 mock，不访问网络、不启动真实 agent。
 - Bridge 测试启动本地 mock API，用无头 Microsoft Edge 打开面板；未安装 Edge 时会显式 skip。
 - 覆盖 `full`、`cancel`、`retry` 三个 bridge 场景，以及 Host 路由、runner、refs、creator、client 单测。
 
-当前测试结果：`npm test` → **62 tests / 0 fail**。
+当前测试结果：`npm test` → **65 tests / 0 fail**。
 
 ## 行为与限制
 
