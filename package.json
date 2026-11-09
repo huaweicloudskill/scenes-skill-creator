@@ -1,6 +1,6 @@
 {
   "name": "@huaweicloud-plugins/scenes-skill-creator",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "DeepSeek Harness plugin: create, evaluate, repair, and install generic and Huawei Cloud skills through a web panel backed by the official creators.",
   "license": "MIT",
   "repository": {

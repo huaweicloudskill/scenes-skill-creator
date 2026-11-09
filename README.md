@@ -75,6 +75,51 @@ dsh plugin --profile desktop add @huaweicloud-plugins/scenes-skill-creator
   & "<DSH 安装目录>\resources\runtime\cli\bin\dsh.cmd" plugin --profile desktop remove @huaweicloud-plugins/scenes-skill-creator
   ```
 
+### 方式三：pnpm 安装
+
+DSH Desktop 的 profile 默认由 pnpm 管理，pnpm 是最直接的包管理器安装方式。先退出 DSH，然后在 profile 目录执行：
+
+```powershell
+cd $env:USERPROFILE\.dsh\profiles\desktop
+pnpm add @huaweicloud-plugins/scenes-skill-creator
+```
+
+安装后确认 profile 的 `package.json` 中 `dsh.profile.bundles` 包含：
+
+```jsonc
+"@huaweicloud-plugins/scenes-skill-creator"
+```
+
+如果 pnpm 只安装了依赖、没有自动选中 bundle，在 DSH 插件页把 **Scenes Skill Creator** 打开，或手动加入上面这一项。重启 DSH 后生效。
+
+### 方式四：npm 安装
+
+npm 适合已经由 npm 管理的项目或其他 Node 环境：
+
+```powershell
+cd $env:USERPROFILE\.dsh\profiles\desktop
+npm install @huaweicloud-plugins/scenes-skill-creator
+```
+
+安装完成后同样要把包名加入 `dsh.profile.bundles`，然后重启 DSH：
+
+```jsonc
+{
+  "dsh": {
+    "profile": {
+      "bundles": [
+        "@deepseek-ai/dsh-base",
+        "@deepseek-ai/dsh-web-app",
+        "@deepseek-ai/dsh-experimental-agent-team-profile",
+        "@huaweicloud-plugins/scenes-skill-creator"
+      ]
+    }
+  }
+}
+```
+
+> DSH Desktop 的默认 profile 由 pnpm 管理，日常更推荐「DSH 插件页」或 `pnpm add`；在 pnpm profile 里用 npm 可能生成额外的 `package-lock.json`，升级插件时请保持一种包管理器。
+
 ### 安装后检查
 
 侧栏出现 **Scenes Skill Creator**，打开面板能看到两个场景、参考案例卡和推荐技能卡。
