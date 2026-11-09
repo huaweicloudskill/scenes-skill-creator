@@ -1,14 +1,15 @@
-# scenes-skill-creator — 实现契约（Lead 与协作成员共读）
+# scenes-skill-creator — 实现契约
 
 ## 目标
 
-在 `D:\skill-temp\scenes-skill-creator` 交付一个 **DeepSeek Harness bundle 插件**：
+本仓库交付一个 **DeepSeek Harness bundle 插件**：
 
-- 名称：`scenes-skill-creator`（本地项目；`src/client.js` 里 `window.__ModuleLoader__.load({ id })` 必须与 `package.json` name 一致）。
-- Host 半侧：复用 `D:\dsh-skill-creator\src\core`（同为官方 `@cloudplugin/scenes-skill-creator` 的 Host 代码）的创建 / 评审流程；
-- Client 半侧：**不重写 UI**，把原型 `D:\skill-temp\prototype\index.html` 原样放进插件的 `assets/panel.html`，用 iframe 铺满 main slot；
+- 名称：`@huaweicloud-plugins/scenes-skill-creator`（`src/client.js` 里 `window.__ModuleLoader__.load({ id })` 必须与 `package.json` name 一致）。
+- Host 半侧：参考官方 `@cloudplugin/scenes-skill-creator` 的创建 / 评审流程；
+- Client 半侧：以设计原型为 UI 源，把发布版放进 `assets/panel.html`，用 iframe 铺满 main slot；
 - 原型 UI 通过 `assets/panel-bridge.js` 接到 Host 真实 API，替换原型里的模拟定时器 / 种子记录；
-- 只保留 **通用技能 generic**、**华为云基础云服务技能 huawei** 两个场景（原型 v29 起已删除标准API）。
+- 只保留 **通用技能 generic**、**华为云基础云服务技能 huawei** 两个场景。
+- 参考、推荐数据全部由公共 JSON 数据仓库提供，发布版面板不内嵌数据快照。
 
 ## 目录与写入范围（防冲突）
 
@@ -82,7 +83,7 @@
 7. `loadRuns()` 覆盖为 `GET /run`（不报错时更新 `S.runs`）；`?fresh=1` 等演示参数不再造种子。
 8. 华为云目录：embedded 时 `S.domains` / `S.products` 从 `/catalog` 拉；`loadProducts(domain)` 改为 `GET /catalog?path=skills/<domain>`；切换下拉时沿用原型事件流。失败时保留原型静态 `CATALOG` 兜底并只提示一次。
 9. 环境页：启动时 `GET /status`，成功则 `S.preflight = {git:true,bash:true,python:true,net:true,cacheDays:3,cred:true}` 并 `renderPreflight()`（UI 结构不变，只填真实可用状态）；失败时按原型离线态展示。
-10. 参考案例 / 技能推荐 / 视频弹窗：保持原型的 `API_SNAPSHOT` 快照，不请求外部网络。
+10. 参考案例 / 技能推荐 / 视频弹窗：通过 Host `GET /refs` 读取公共 JSON 数据；发布版不保留面板内嵌 `API_SNAPSHOT`，远程失败时按 Host 的 last-good / 空数据处理，不伪造数据。
 11. **禁止**在 embedded 模式下跑原型的 `seedRuns()`、`clearSim()` 定时模拟、`finishCreation()` 假评分；所有 run 字段来自 Host。
 12. 隐藏只对演示有意义的控件（`#demo` 场景选择），其余顶栏 / 菜单 / 卡片 / 语言 / 主题按钮保持原型。
 13. 提供 `window.__SC_BRIDGE__`：`{ ready, refreshRuns, api }` 供测试；页面加载完成设置 `document.documentElement.dataset.scBridge = "ready"`。
@@ -97,6 +98,6 @@
 
 ## 参考
 
-- Host 流程 / 评审：`D:\dsh-skill-creator\src\core`（runner / evaluator / creators）。
-- UI 原型：`D:\skill-temp\prototype\index.html`（当前 v33 状态）。
-- 原型说明：`D:\skill-temp\prototype\README.md`。
+- Host 流程 / 评审：官方 `@cloudplugin/scenes-skill-creator`（runner / evaluator / creators）。
+- UI 设计原型：本仓库发布版 `assets/panel.html`（开发原型快照不随插件发布）。
+- 参考 / 推荐数据：`developer-skill/common-skill-dev` 仓库的 `dsh-plugin` 分支。

@@ -207,6 +207,7 @@ DELETE /run?id=                   删除已结束记录（运行中需先取消�
 npm test          # host + bridge + client 测试
 npm run check     # node --check src/client.js 与 assets/panel-bridge.js
 npm run doctor    # 自检本机 DSH profile（manifest / bundle / 面板资源）
+npm run sync:panel -- <prototype/index.html>  # 开发用；默认移除面板内嵌参考数据
 ```
 
 - Host 测试使用 mock，不访问网络、不启动真实 agent。
