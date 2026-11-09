@@ -1,0 +1,63 @@
+{
+  "name": "scenes-skill-creator",
+  "version": "0.5.2",
+  "description": "DeepSeek Harness bundle: create spec-compliant skills through the prototype's panel UI, delegating creation and review to the official generic / Huawei Cloud creator skills.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:huaweicloudskill/scenes-skill-creator.git"
+  },
+  "homepage": "https://github.com/huaweicloudskill/scenes-skill-creator",
+  "bugs": {
+    "url": "https://github.com/huaweicloudskill/scenes-skill-creator/issues"
+  },
+  "icon": "./icon.svg",
+  "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "files": [
+    "src/**",
+    "assets/**",
+    "bin/**",
+    "docs/panel.png",
+    "tools/sync-panel.mjs",
+    "cordis.patch.yml",
+    "icon.svg",
+    "locale/**",
+    "README.md",
+    "LICENSE"
+  ],
+  "bin": {
+    "dsh-skill-create": "bin/dsh-skill-create.mjs",
+    "dsh-skill-validate": "bin/dsh-skill-validate.mjs"
+  },
+  "exports": {
+    ".": "./src/core/plugin.mjs",
+    "./client": "./src/client.js",
+    "./locale/*.json": "./locale/*.json",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-conversation"
+      ]
+    }
+  },
+  "scripts": {
+    "test": "node test/run.mjs",
+    "check": "node --check src/client.js && node --check assets/panel-bridge.js",
+    "sync:panel": "node tools/sync-panel.mjs",
+    "creator:status": "node bin/dsh-skill-create.mjs --status",
+    "creator:refresh": "node bin/dsh-skill-create.mjs --refresh --status"
+  }
+}

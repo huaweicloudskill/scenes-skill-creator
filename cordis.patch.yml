@@ -1,0 +1,75 @@
+# scenes-skill-creator — bundle patch (inserted rows)
+#
+# Host side: registers the official creator skills (ctx.skills.registerProvider), serves
+# the panel API and the prototype UI (ctx.webServer), and runs the create -> evaluate
+# flow by driving an agent. Client side: mounts the prototype panel in the main slot.
+#
+# Package profile note: a profile's cordis.patch.yml REPLACES this whole block when the
+# same id is configured there (top-level keys are replaced, not deep-merged). If you
+# override `run`, write every key you want to keep.
+- insert:
+    - id: scenes-skill-creator
+      name: 'scenes-skill-creator'
+      config:
+        # Two official creators only (the prototype removed the REST API scenario).
+        # Each is fetched from its repository and registered as a loadable DSH skill.
+        creators:
+          huawei:
+            repo: 'https://gitcode.com/huaweicloud/huaweicloud-skills.git'
+            branch: 'master'
+            path: 'skills/devtools/common/huawei-cloud-skill-creator'
+          generic:
+            repo: 'https://gitcode.com/grape-dev/grape-skills.git'
+            branch: 'main'
+            path: 'skills/coding/scaffolding/common-skill-creator'
+        # Huawei Cloud taxonomy for the three dropdowns (read lazily from the repo).
+        catalog:
+          repo: 'huaweicloud/huaweicloud-skills'
+          ref: 'master'
+          root: 'skills'
+          localDir: ''
+          ttlMs: 600000
+          timeoutMs: 15000
+        # Reference/recommendation JSON from the public dsh-plugin branch. GitCode's raw
+        # endpoint 403s for non-default branches, so read through the Contents API and
+        # decode its base64 `content` (see refs.mjs).
+        refs:
+          huaweiUrl: 'https://api.gitcode.com/api/v5/repos/developer-skill/common-skill-dev/contents/huawei/references.json?ref=dsh-plugin'
+          genericUrl: 'https://api.gitcode.com/api/v5/repos/developer-skill/common-skill-dev/contents/generic/references.json?ref=dsh-plugin'
+          refreshMs: 0
+          timeoutMs: 8000
+          maxBytes: 1048576
+          cacheBust: true
+        run:
+          # Creator pipelines run bash scripts and CLIs. A read-only/workspace-write
+          # sandbox blocks those forks at the approval wall; unattended runs then die on
+          # the idle watchdog. This bundle defaults to full access: only use it in a
+          # workspace you trust. Set `permissionPreset` to a stricter preset if a human
+          # is present to approve the tool calls.
+          permissionPreset: 'danger-full-access'
+          # cwd: '/absolute/path/to/your/workspace'  # skills land in <cwd>/skills/...
+          passScore: 8.5
+          maxEvalRounds: 3
+          # Generic creation is the slow path: one eval round + contract-first directives.
+          # Set genericFastMode: false (or genericMaxEvalRounds: 3) if quality matters more.
+          genericFastMode: true
+          genericMaxEvalRounds: 1
+          evalReadonlyOnly: true
+          evalTokenBudget: 50000
+          evalDurationCapSeconds: 600
+          evalMaxToolCalls: 20
+          evalMaxLlmCalls: 20
+          evalMaxCliCalls: 20
+          evalMaxSdkCalls: 20
+          evalMaxApiCalls: 20
+          evalMaxToolFailures: 0
+          evalMaxRetries: 0
+          minFixtureCases: 3
+          gateScoreCap: 7.0
+          strictStructureGate: false
+          idleTimeoutMs: 480000
+          phaseTimeoutMs: 7200000
+          toolWaitMs: 1200000
+          minImprovement: 0.2
+          # agentPreset: 'standard'
+          # agentOptions: { provider: 'deepseek', model: 'deepseek-chat' }

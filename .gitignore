@@ -1,0 +1,11 @@
+﻿node_modules/
+dist/
+coverage/
+.cache/
+.nyc_output/
+*.log
+*.tmp
+*.bak
+*.bak-*
+.DS_Store
+Thumbs.db
