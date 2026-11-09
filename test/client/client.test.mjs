@@ -9,8 +9,8 @@ const client = fs.readFileSync(path.join(root, 'src', 'client.js'), 'utf8');
 
 test('client registers the package id and mounts the prototype panel', () => {
   const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
-  assert.equal(pkg.name, 'scenes-skill-creator');
-  assert.ok(client.includes("id: 'scenes-skill-creator'"), 'module id must equal package name');
+  assert.equal(pkg.name, '@huaweicloud-plugins/scenes-skill-creator');
+  assert.ok(client.includes("id: '@huaweicloud-plugins/scenes-skill-creator'"), 'module id must equal package name');
   assert.ok(client.includes('__ModuleLoader__.load'));
   assert.ok(client.includes('/scenes-skill-creator/app/'), 'iframe must point at the Host panel route');
   assert.ok(client.includes("name: 'main'"), 'main slot');

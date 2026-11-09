@@ -9,7 +9,7 @@
 # override `run`, write every key you want to keep.
 - insert:
     - id: scenes-skill-creator
-      name: 'scenes-skill-creator'
+      name: '@huaweicloud-plugins/scenes-skill-creator'
       config:
         # Two official creators only (the prototype removed the REST API scenario).
         # Each is fetched from its repository and registered as a loadable DSH skill.

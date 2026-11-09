@@ -59,7 +59,21 @@ DSH Web
 
 ## 安装
 
-本包尚未发布 npm，按本地 bundle 安装。
+### 从 npm 安装
+
+```powershell
+cd $env:USERPROFILE\.dsh\profiles\desktop
+pnpm add @huaweicloud-plugins/scenes-skill-creator
+
+# 确认 profile 已注册：
+#   dsh.profile.bundles 包含 "@huaweicloud-plugins/scenes-skill-creator"
+#   cordis.patch.yml 的插件条目 id 为 "scenes-skill-creator"，
+#   name 为 "@huaweicloud-plugins/scenes-skill-creator"
+```
+
+也可以直接在 DSH「插件」页面安装 npm 包；不同 DSH 版本的入口名称可能不同。
+
+### 本地开发包
 
 ```powershell
 git clone https://github.com/huaweicloudskill/scenes-skill-creator.git
@@ -71,13 +85,7 @@ cd scenes-skill-creator
 # 进入 DSH desktop profile，把本仓库作为本地依赖加入
 cd $env:USERPROFILE\.dsh\profiles\desktop
 pnpm add <本仓库的绝对路径>
-
-# 确认 profile 已注册：
-#   dsh.profile.bundles 包含 "scenes-skill-creator"
-#   cordis.patch.yml 的插件条目 id / name 均为 "scenes-skill-creator"
 ```
-
-也可以直接使用 DSH「插件」页面里的本地目录安装能力；不同 DSH 版本的入口名称可能不同。
 
 安装后需要**重启一次 DSH**。bundle 列表、补丁层和 client 资源只在启动时解析；不重启的典型表现是侧栏没有图标，或 `/scenes-skill-creator/api` 404。
 

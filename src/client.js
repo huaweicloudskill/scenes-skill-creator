@@ -11,7 +11,7 @@
  * composer dock is deliberately not used (same decision as the reference plugin).
  */
 window.__ModuleLoader__.load({
-  id: 'scenes-skill-creator',
+  id: '@huaweicloud-plugins/scenes-skill-creator',
   factory(require) {
     const React = require('react');
     const h = React.createElement;

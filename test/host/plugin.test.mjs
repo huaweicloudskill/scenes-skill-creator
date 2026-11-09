@@ -52,7 +52,7 @@ const settle = async (predicate, rounds = 100) => {
 describe('plugin assembly · API + static panel UI', () => {
   test('project root and assets dir are resolved from THIS module', () => {
     const pkg = JSON.parse(fs.readFileSync(path.join(PROJECT_ROOT, 'package.json'), 'utf8'));
-    assert.equal(pkg.name, 'scenes-skill-creator');
+    assert.equal(pkg.name, '@huaweicloud-plugins/scenes-skill-creator');
     assert.equal(ASSETS_DIR, path.join(PROJECT_ROOT, 'assets'));
     assert.ok(fs.existsSync(path.join(ASSETS_DIR, 'panel.html')), 'assets/panel.html must be shipped');
     assert.equal(path.basename(ASSETS_DIR), 'assets');
